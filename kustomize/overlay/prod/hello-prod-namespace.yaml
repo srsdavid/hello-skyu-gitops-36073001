@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-prod
+  labels:
+    environment-id: env_a8aaeb9a-f555-451f-91fc-054fab02b354
+    project-id: project_3fee4a6f-b3c8-42c7-9aa8-bc0942e23baa
+    project-name: Hello
+    environment-name: prod
+    organization-id: org_219aede3-da6b-4fe5-8560-fc32e8fb3a28
