@@ -1,0 +1,44 @@
+name: >-
+  container-prod_env_a1cfb8d4-f1c8-40ae-8772-a326d79b0d67_app_0de4ba22-f99a-468a-9dd0-02e945efcb66
+  Pipeline (Skyu Generated) (Skyu Generated)
+'on':
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+env:
+  ENCODED_PIPELINE_SECRET: >-
+    ${{secrets.HELLOSKYUGITOPS36073001_ENV_A1CFB8D4F1C840AE8772A326D79B0D67_APP_0DE4BA22F99A468A9DD002E945EFCB66_CONTAINERPROD_ENV_A1CFB8D4F1C840AE8772A326D79B0D67_APP_0DE4BA22F99A468A9DD002E945EFCB66}}
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start
+        run: echo " Starting GitHub Action!"
+      - name: 'Run :: Checkout repository'
+        uses: actions/checkout@v2
+      - name: 'Run :: Decoding Secrets'
+        run: >-
+          echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r
+          'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo
+          "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+      - name: 'Run :: Deploy and Notify Resource Service'
+        run: |2-
+
+              response=$(curl -d "imageRegistryURL=${{ steps.skyu-login-ecr.outputs.registry }}&appVersionId=${{ env.DEPLOYMENT_APP_VERSION_ID }}&tag=${{ env.IMAGE_NAME_TO_PUSH }}&containerName=${{ env.DEPLOYMENT_CONTAINER_NAME }}&commitDetails[commitHash]=${{ github.event.after }}&commitDetails[commitAvatar]=https://github.com/${{ github.event.head_commit.author.name }}.png&commitDetails[commitTime]=${{ github.event.head_commit.timestamp }}&commitDetails[commitMessage]=\"${{ github.event.head_commit.message }}\"&commitDetails[commitUser]=${{ github.event.head_commit.author.name }}" -X PATCH -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.DEPLOYMENT_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.DEPLOYMENT_PROJECT_ID }}' -H 'x-environment-id: ${{ env.DEPLOYMENT_ENVIRONMENT_ID }}' -H 'x-application-id: ${{ env.DEPLOYMENT_APPLICATION_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded' 'https://api.dev.skyu.io/resource-service/applications/deploy')
+
+              status_code=$?
+
+              if [ $status_code -eq 0 ]; then
+                if echo "$response" | grep -q '"message":"Unauthorized"'; then
+                  echo "FAILED :: Unauthorized access."
+                  exit 1
+                else
+                  echo "SUCCESS :: Response: $response"
+                fi
+              else
+                echo "Failed to deploy. HTTP status code: $status_code"
+                exit 1
+              fi
+            
